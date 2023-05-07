@@ -1,19 +1,46 @@
 import * as core from "@actions/core";
-import { wait } from "./wait";
+import * as rustCore from "@actions-rs/core";
+import * as toolCache from "@actions/tool-cache";
+
+import getActionInputs from "./args";
+import resolveConfig from "./config";
 
 async function run(): Promise<void> {
+  const cargo = await rustCore.Cargo.get();
+
+  const inputs = getActionInputs();
+  const config = await resolveConfig(inputs);
+
+  core.info(
+    `[surrealdb-migrations] downloading surrealdb-migrations from ${config.downloadUrl}`
+  );
+  const surrealdbMigrationsTarballPath = await toolCache.downloadTool(
+    config.downloadUrl
+  );
+  const surrealdbMigrationsBinPath = await toolCache.extractTar(
+    surrealdbMigrationsTarballPath
+  );
+
+  core.addPath(surrealdbMigrationsBinPath);
+
+  const additionalArgs = config.additionalOptions;
+  const args = ["surrealdb-migrations", "apply"].concat(additionalArgs);
+
+  core.info(`[surrealdb-migrations] applying migrations`);
+
+  await cargo.call(args);
+}
+
+async function main(): Promise<void> {
   try {
-    const ms: string = core.getInput("milliseconds");
-    core.debug(`Waiting ${ms} milliseconds ...`); // debug is only output if you set the secret `ACTIONS_STEP_DEBUG` to true
-
-    core.debug(new Date().toTimeString());
-    await wait(parseInt(ms, 10));
-    core.debug(new Date().toTimeString());
-
-    core.setOutput("time", new Date().toTimeString());
+    await run();
   } catch (error) {
-    if (error instanceof Error) core.setFailed(error.message);
+    if (error instanceof Error) {
+      core.setFailed(error.message);
+    } else {
+      core.info(`[surrealdb-migrations] ${error}`);
+    }
   }
 }
 
-run();
+main();
