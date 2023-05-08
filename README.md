@@ -27,9 +27,8 @@ jobs:
           override: true
 
       - name: Apply migrations
-        uses: Odonno/surrealdb-migrations@v0.1
+        uses: Odonno/surrealdb-migrations-action@v0.1.0
         with:
-          version: "0.9.5"
           url: "cloud.surrealdb.com"
 ```
 
