@@ -43,17 +43,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __rest = (this && this.__rest) || function (s, e) {
-    var t = {};
-    for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
-        t[p] = s[p];
-    if (s != null && typeof Object.getOwnPropertySymbols === "function")
-        for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
-            if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
-                t[p[i]] = s[p[i]];
-        }
-    return t;
-};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -67,10 +56,11 @@ const node_fetch_1 = __importDefault(__nccwpck_require__(4912));
  */
 function resolveConfig(input) {
     return __awaiter(this, void 0, void 0, function* () {
-        const { requestedVersion } = input, rest = __rest(input, ["requestedVersion"]);
         const releaseEndpoint = "https://api.github.com/repos/Odonno/surrealdb-migrations/releases";
-        const downloadUrl = yield getDownloadUrl(releaseEndpoint, requestedVersion);
-        return Object.assign(Object.assign({}, rest), { downloadUrl });
+        const downloadUrl = yield getDownloadUrl(releaseEndpoint, input.requestedVersion);
+        return {
+            downloadUrl,
+        };
     });
 }
 exports["default"] = resolveConfig;
@@ -91,7 +81,8 @@ function getDownloadUrl(releaseEndpoint, requestedVersion) {
         const releaseInfo = yield releaseInfoRequest.json();
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const gzipAsset = releaseInfo["assets"].find((asset) => {
-            return asset["content_type"] === "application/gzip";
+            return (asset["name"].startsWith("surrealdb-migrations") &&
+                asset["name"].endsWith(".tar.gz"));
         });
         if (!gzipAsset) {
             throw new Error(`Couldn't find a release tarball containing binaries for ${requestedVersion}`);
@@ -145,13 +136,12 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core = __importStar(__nccwpck_require__(7733));
-const rustCore = __importStar(__nccwpck_require__(3291));
 const toolCache = __importStar(__nccwpck_require__(514));
+const exec = __importStar(__nccwpck_require__(1757));
 const args_1 = __importDefault(__nccwpck_require__(3444));
 const config_1 = __importDefault(__nccwpck_require__(1234));
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
-        const cargo = yield rustCore.Cargo.get();
         const inputs = (0, args_1.default)();
         const config = yield (0, config_1.default)(inputs);
         core.info(`[surrealdb-migrations] downloading surrealdb-migrations from ${config.downloadUrl}`);
@@ -159,24 +149,24 @@ function run() {
         const surrealdbMigrationsBinPath = yield toolCache.extractTar(surrealdbMigrationsTarballPath);
         core.addPath(surrealdbMigrationsBinPath);
         const additionalArgs = [];
-        if (config.url) {
-            additionalArgs.push("--url", config.url);
+        if (inputs.url) {
+            additionalArgs.push("--url", inputs.url);
         }
-        if (config.ns) {
-            additionalArgs.push("--ns", config.ns);
+        if (inputs.ns) {
+            additionalArgs.push("--ns", inputs.ns);
         }
-        if (config.db) {
-            additionalArgs.push("--db", config.db);
+        if (inputs.db) {
+            additionalArgs.push("--db", inputs.db);
         }
-        if (config.username) {
-            additionalArgs.push("--username", config.username);
+        if (inputs.username) {
+            additionalArgs.push("--username", inputs.username);
         }
-        if (config.password) {
-            additionalArgs.push("--password", config.password);
+        if (inputs.password) {
+            additionalArgs.push("--password", inputs.password);
         }
-        const args = ["surrealdb-migrations", "apply"].concat(additionalArgs);
+        const args = ["apply"].concat(additionalArgs);
         core.info(`[surrealdb-migrations] applying migrations`);
-        yield cargo.call(args);
+        exec.exec("surrealdb-migrations", args);
     });
 }
 function main() {

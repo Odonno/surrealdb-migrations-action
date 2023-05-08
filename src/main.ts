@@ -1,13 +1,11 @@
 import * as core from "@actions/core";
-import * as rustCore from "@actions-rs/core";
 import * as toolCache from "@actions/tool-cache";
+import * as exec from "@actions/exec";
 
 import getActionInputs from "./args";
 import resolveConfig from "./config";
 
 async function run(): Promise<void> {
-  const cargo = await rustCore.Cargo.get();
-
   const inputs = getActionInputs();
   const config = await resolveConfig(inputs);
 
@@ -25,27 +23,27 @@ async function run(): Promise<void> {
 
   const additionalArgs: string[] = [];
 
-  if (config.url) {
-    additionalArgs.push("--url", config.url);
+  if (inputs.url) {
+    additionalArgs.push("--url", inputs.url);
   }
-  if (config.ns) {
-    additionalArgs.push("--ns", config.ns);
+  if (inputs.ns) {
+    additionalArgs.push("--ns", inputs.ns);
   }
-  if (config.db) {
-    additionalArgs.push("--db", config.db);
+  if (inputs.db) {
+    additionalArgs.push("--db", inputs.db);
   }
-  if (config.username) {
-    additionalArgs.push("--username", config.username);
+  if (inputs.username) {
+    additionalArgs.push("--username", inputs.username);
   }
-  if (config.password) {
-    additionalArgs.push("--password", config.password);
+  if (inputs.password) {
+    additionalArgs.push("--password", inputs.password);
   }
 
-  const args = ["surrealdb-migrations", "apply"].concat(additionalArgs);
+  const args = ["apply"].concat(additionalArgs);
 
   core.info(`[surrealdb-migrations] applying migrations`);
 
-  await cargo.call(args);
+  exec.exec("surrealdb-migrations", args);
 }
 
 async function main(): Promise<void> {

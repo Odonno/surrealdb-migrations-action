@@ -3,31 +3,6 @@ import { ActionInputs } from "./args";
 
 export type Config = {
   /**
-   * Url of the surrealdb instance. Default value is `localhost:8000`
-   */
-  url: string;
-
-  /**
-   * Namespace to use inside the surrealdb instance. Default value is `test`
-   */
-  ns: string;
-
-  /**
-   * Name of the database to use inside the surrealdb instance. Default value is `test`
-   */
-  db: string;
-
-  /**
-   * Username used to authenticate to the surrealdb instance. Default value is `root`
-   */
-  username: string;
-
-  /**
-   * Password used to authenticate to the surrealdb instance. Default value is `root`
-   */
-  password: string;
-
-  /**
    * The URL to download a tarball of surrealdb-migrations from.
    */
   downloadUrl: string;
@@ -42,15 +17,15 @@ export type Config = {
 export default async function resolveConfig(
   input: ActionInputs
 ): Promise<Config> {
-  const { requestedVersion, ...rest } = input;
-
   const releaseEndpoint =
     "https://api.github.com/repos/Odonno/surrealdb-migrations/releases";
 
-  const downloadUrl = await getDownloadUrl(releaseEndpoint, requestedVersion);
+  const downloadUrl = await getDownloadUrl(
+    releaseEndpoint,
+    input.requestedVersion
+  );
 
   return {
-    ...rest,
     downloadUrl,
   };
 }
@@ -77,7 +52,10 @@ async function getDownloadUrl(
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const gzipAsset = releaseInfo["assets"].find((asset: any) => {
-    return asset["content_type"] === "application/gzip";
+    return (
+      asset["name"].startsWith("surrealdb-migrations") &&
+      asset["name"].endsWith(".tar.gz")
+    );
   });
 
   if (!gzipAsset) {
