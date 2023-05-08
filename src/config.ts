@@ -1,3 +1,4 @@
+import fetch from "node-fetch";
 import { ActionInputs } from "./args";
 
 export type Config = {
@@ -71,7 +72,8 @@ async function getDownloadUrl(
       : `${releaseEndpoint}/tags/${requestedVersion}`;
 
   const releaseInfoRequest = await fetch(releaseInfoUri);
-  const releaseInfo = await releaseInfoRequest.json();
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const releaseInfo: any = await releaseInfoRequest.json();
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const gzipAsset = releaseInfo["assets"].find((asset: any) => {
