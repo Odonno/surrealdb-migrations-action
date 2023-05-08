@@ -15,7 +15,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Odonno/surrealdb-migrations-github-actions.git"
+    "url": "git+https://github.com/Odonno/surrealdb-migrations-action.git"
   },
   "keywords": [
     "actions",
