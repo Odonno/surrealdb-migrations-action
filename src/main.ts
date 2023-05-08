@@ -23,7 +23,24 @@ async function run(): Promise<void> {
 
   core.addPath(surrealdbMigrationsBinPath);
 
-  const additionalArgs = config.additionalOptions;
+  const additionalArgs: string[] = [];
+
+  if (config.url) {
+    additionalArgs.push("--url", config.url);
+  }
+  if (config.ns) {
+    additionalArgs.push("--ns", config.ns);
+  }
+  if (config.db) {
+    additionalArgs.push("--db", config.db);
+  }
+  if (config.username) {
+    additionalArgs.push("--username", config.username);
+  }
+  if (config.password) {
+    additionalArgs.push("--password", config.password);
+  }
+
   const args = ["surrealdb-migrations", "apply"].concat(additionalArgs);
 
   core.info(`[surrealdb-migrations] applying migrations`);

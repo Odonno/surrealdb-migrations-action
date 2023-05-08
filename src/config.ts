@@ -1,11 +1,30 @@
-import { parseArgsStringToArgv } from "string-argv";
 import { ActionInputs } from "./args";
 
 export type Config = {
   /**
-   * Additional command line options.
+   * Url of the surrealdb instance. Default value is `localhost:8000`
    */
-  additionalOptions: string[];
+  url: string;
+
+  /**
+   * Namespace to use inside the surrealdb instance. Default value is `test`
+   */
+  ns: string;
+
+  /**
+   * Name of the database to use inside the surrealdb instance. Default value is `test`
+   */
+  db: string;
+
+  /**
+   * Username used to authenticate to the surrealdb instance. Default value is `root`
+   */
+  username: string;
+
+  /**
+   * Password used to authenticate to the surrealdb instance. Default value is `root`
+   */
+  password: string;
 
   /**
    * The URL to download a tarball of surrealdb-migrations from.
@@ -22,20 +41,15 @@ export type Config = {
 export default async function resolveConfig(
   input: ActionInputs
 ): Promise<Config> {
+  const { requestedVersion, ...rest } = input;
+
   const releaseEndpoint =
     "https://api.github.com/repos/Odonno/surrealdb-migrations/releases";
 
-  const downloadUrl = await getDownloadUrl(
-    releaseEndpoint,
-    input.requestedVersion
-  );
-
-  const additionalOptions: string[] = input.opts
-    ? parseArgsStringToArgv(input.opts)
-    : [];
+  const downloadUrl = await getDownloadUrl(releaseEndpoint, requestedVersion);
 
   return {
-    additionalOptions,
+    ...rest,
     downloadUrl,
   };
 }

@@ -15,6 +15,22 @@ inputs:
     required: true
     default: "latest"
 
-  args:
-    description: "Extra command line arguments passed to surrealdb-migrations"
+  url:
+    description: "Url of the surrealdb instance"
+    required: false
+
+  ns:
+    description: "Namespace to use inside the surrealdb instance"
+    required: false
+
+  db:
+    description: "Name of the database to use inside the surrealdb instance"
+    required: false
+
+  username:
+    description: "Username used to authenticate to the surrealdb instance"
+    required: false
+
+  password:
+    description: "Password used to authenticate to the surrealdb instance"
     required: false

@@ -2,15 +2,27 @@ import { input } from "@actions-rs/core";
 
 export type ActionInputs = {
   requestedVersion: string;
-  opts: string;
+  url: string;
+  ns: string;
+  db: string;
+  username: string;
+  password: string;
 };
 
 export default function getActionInputs(): ActionInputs {
   const requestedVersion = input.getInput("version");
-  const opts = input.getInput("args");
+  const url = input.getInput("url");
+  const ns = input.getInput("ns");
+  const db = input.getInput("db");
+  const username = input.getInput("username");
+  const password = input.getInput("password");
 
   return {
     requestedVersion,
-    opts,
+    url,
+    ns,
+    db,
+    username,
+    password,
   };
 }
