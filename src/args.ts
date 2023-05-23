@@ -2,6 +2,10 @@ import { input } from "@actions-rs/core";
 
 export type ActionInputs = {
   requestedVersion: string;
+  address: string;
+  /**
+   * @deprecated You should use `address` instead (since v0.9.6).
+   */
   url: string;
   ns: string;
   db: string;
@@ -11,6 +15,7 @@ export type ActionInputs = {
 
 export default function getActionInputs(): ActionInputs {
   const requestedVersion = input.getInput("version");
+  const address = input.getInput("address");
   const url = input.getInput("url");
   const ns = input.getInput("ns");
   const db = input.getInput("db");
@@ -19,6 +24,7 @@ export default function getActionInputs(): ActionInputs {
 
   return {
     requestedVersion,
+    address,
     url,
     ns,
     db,
