@@ -15,8 +15,8 @@ inputs:
     required: true
     default: "latest"
 
-  url:
-    description: "Url of the surrealdb instance"
+  address:
+    description: "Address of the surrealdb instance"
     required: false
 
   ns:

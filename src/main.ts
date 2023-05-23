@@ -23,6 +23,9 @@ async function run(): Promise<void> {
 
   const additionalArgs: string[] = [];
 
+  if (inputs.address) {
+    additionalArgs.push("--address", inputs.address);
+  }
   if (inputs.url) {
     additionalArgs.push("--url", inputs.url);
   }

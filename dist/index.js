@@ -10,6 +10,7 @@ Object.defineProperty(exports, "__esModule", ({ value: true }));
 const core_1 = __nccwpck_require__(3291);
 function getActionInputs() {
     const requestedVersion = core_1.input.getInput("version");
+    const address = core_1.input.getInput("address");
     const url = core_1.input.getInput("url");
     const ns = core_1.input.getInput("ns");
     const db = core_1.input.getInput("db");
@@ -17,6 +18,7 @@ function getActionInputs() {
     const password = core_1.input.getInput("password");
     return {
         requestedVersion,
+        address,
         url,
         ns,
         db,
@@ -149,6 +151,9 @@ function run() {
         const surrealdbMigrationsBinPath = yield toolCache.extractTar(surrealdbMigrationsTarballPath);
         core.addPath(surrealdbMigrationsBinPath);
         const additionalArgs = [];
+        if (inputs.address) {
+            additionalArgs.push("--address", inputs.address);
+        }
         if (inputs.url) {
             additionalArgs.push("--url", inputs.url);
         }
