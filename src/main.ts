@@ -46,11 +46,19 @@ async function run(): Promise<void> {
   }
 
   const canApplyDryRun = isFeatureAvailable("apply --dry-run", releaseVersion);
+  const canApplyValidateVersionOrder = isFeatureAvailable(
+    "apply --validate-version-order",
+    releaseVersion
+  );
 
-  if (canApplyDryRun) {
+  if (canApplyDryRun && canApplyValidateVersionOrder) {
     core.info(`[surrealdb-migrations] checking is everything is right`);
 
-    const applyDryRunArgs = ["apply", "--dry-run"].concat(additionalArgs);
+    const applyDryRunArgs = [
+      "apply",
+      "--dry-run",
+      "--validate-version-order",
+    ].concat(additionalArgs);
     await exec.exec("surrealdb-migrations", applyDryRunArgs);
 
     const definitionsFolderPath = retrieveMigrationDefinitionsPath();

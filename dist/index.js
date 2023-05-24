@@ -93,6 +93,9 @@ const features = {
     "apply --dry-run": {
         since: "0.9.6",
     },
+    "apply --validate-version-order": {
+        since: "0.9.6",
+    },
 };
 const isFeatureAvailable = (name, version) => {
     const feature = features[name];
@@ -242,9 +245,14 @@ function run() {
             additionalArgs.push("--password", inputs.password);
         }
         const canApplyDryRun = (0, features_1.isFeatureAvailable)("apply --dry-run", releaseVersion);
-        if (canApplyDryRun) {
+        const canApplyValidateVersionOrder = (0, features_1.isFeatureAvailable)("apply --validate-version-order", releaseVersion);
+        if (canApplyDryRun && canApplyValidateVersionOrder) {
             core.info(`[surrealdb-migrations] checking is everything is right`);
-            const applyDryRunArgs = ["apply", "--dry-run"].concat(additionalArgs);
+            const applyDryRunArgs = [
+                "apply",
+                "--dry-run",
+                "--validate-version-order",
+            ].concat(additionalArgs);
             yield exec.exec("surrealdb-migrations", applyDryRunArgs);
             const definitionsFolderPath = (0, config_1.retrieveMigrationDefinitionsPath)();
             if (yield (0, git_1.isRepositoryDirty)(definitionsFolderPath)) {
