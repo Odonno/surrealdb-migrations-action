@@ -8,6 +8,7 @@ describe("getActionInputs", () => {
     delete process.env["INPUT_ADDRESS"];
     delete process.env["INPUT_NS"];
     delete process.env["INPUT_DB"];
+    delete process.env["INPUT_SKIP_UNTRACKED_FILES"];
   });
 
   test("action inputs should be resolved from env vars", () => {
@@ -16,6 +17,7 @@ describe("getActionInputs", () => {
       INPUT_ADDRESS: "ws://localhost:8000",
       INPUT_NS: "ns",
       INPUT_DB: "db",
+      INPUT_SKIP_UNTRACKED_FILES: "true",
     };
 
     Object.entries(testEnvVars).forEach(([key, value]) => {
@@ -30,6 +32,7 @@ describe("getActionInputs", () => {
     expect(input.db).toBe("db");
     expect(input.username).toBe("");
     expect(input.password).toBe("");
+    expect(input.skipUntrackedFiles).toBe(true);
   });
 
   const versionTestCases = [

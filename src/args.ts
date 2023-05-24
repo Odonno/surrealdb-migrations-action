@@ -12,6 +12,7 @@ export type ActionInputs = {
   db: string;
   username: string;
   password: string;
+  skipUntrackedFiles: boolean;
 };
 
 export default function getActionInputs(): ActionInputs {
@@ -22,6 +23,7 @@ export default function getActionInputs(): ActionInputs {
   const db = input.getInput("db");
   const username = input.getInput("username");
   const password = input.getInput("password");
+  const skipUntrackedFiles = input.getInputBool("skip-untracked-files");
 
   const parsedVersion = semver.parse(version);
 
@@ -37,5 +39,6 @@ export default function getActionInputs(): ActionInputs {
     db,
     username,
     password,
+    skipUntrackedFiles,
   };
 }

@@ -61,13 +61,15 @@ async function run(): Promise<void> {
     ].concat(additionalArgs);
     await exec.exec("surrealdb-migrations", applyDryRunArgs);
 
-    const definitionsFolderPath = retrieveMigrationDefinitionsPath();
+    if (!inputs.skipUntrackedFiles) {
+      const definitionsFolderPath = retrieveMigrationDefinitionsPath();
 
-    if (await isRepositoryDirty(definitionsFolderPath)) {
-      core.error(
-        `[surrealdb-migrations] please commit definitions files before applying migrations`
-      );
-      throw new Error("Git repository is dirty");
+      if (await isRepositoryDirty(definitionsFolderPath)) {
+        core.error(
+          `[surrealdb-migrations] please commit definitions files before applying migrations`
+        );
+        throw new Error("Git repository is dirty");
+      }
     }
   }
 

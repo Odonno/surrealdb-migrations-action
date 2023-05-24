@@ -34,3 +34,8 @@ inputs:
   password:
     description: "Password used to authenticate to the surrealdb instance"
     required: false
+
+  skip-untracked-files:
+    description: "When a schema changes is made, it should create a definition file when applying migrations. If we detect untracked definition files, the CI will fail. Set to `true` to skip untracked files."
+    required: false
+    default: false
