@@ -1,6 +1,6 @@
 import semver from "semver";
 
-type FeatureNames = "apply --dry-run";
+type FeatureNames = "apply --dry-run" | "apply --validate-version-order";
 
 type Version = `${number}.${number}.${number}`;
 
@@ -12,6 +12,9 @@ type Features = {
 
 const features: Features = {
   "apply --dry-run": {
+    since: "0.9.6",
+  },
+  "apply --validate-version-order": {
     since: "0.9.6",
   },
 };
