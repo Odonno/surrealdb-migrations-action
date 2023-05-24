@@ -1,4 +1,5 @@
 import { input } from "@actions-rs/core";
+import semver from "semver";
 
 export type ActionInputs = {
   requestedVersion: string;
@@ -14,13 +15,19 @@ export type ActionInputs = {
 };
 
 export default function getActionInputs(): ActionInputs {
-  const requestedVersion = input.getInput("version");
+  const version = input.getInput("version");
   const address = input.getInput("address");
   const url = input.getInput("url");
   const ns = input.getInput("ns");
   const db = input.getInput("db");
   const username = input.getInput("username");
   const password = input.getInput("password");
+
+  const parsedVersion = semver.parse(version);
+
+  const requestedVersion = parsedVersion
+    ? `v${parsedVersion.version}`
+    : version;
 
   return {
     requestedVersion,
