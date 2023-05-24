@@ -20,6 +20,7 @@ function getActionInputs() {
     const db = core_1.input.getInput("db");
     const username = core_1.input.getInput("username");
     const password = core_1.input.getInput("password");
+    const skipUntrackedFiles = core_1.input.getInputBool("skip-untracked-files");
     const parsedVersion = semver_1.default.parse(version);
     const requestedVersion = parsedVersion
         ? `v${parsedVersion.version}`
@@ -32,6 +33,7 @@ function getActionInputs() {
         db,
         username,
         password,
+        skipUntrackedFiles,
     };
 }
 exports["default"] = getActionInputs;
@@ -254,10 +256,12 @@ function run() {
                 "--validate-version-order",
             ].concat(additionalArgs);
             yield exec.exec("surrealdb-migrations", applyDryRunArgs);
-            const definitionsFolderPath = (0, config_1.retrieveMigrationDefinitionsPath)();
-            if (yield (0, git_1.isRepositoryDirty)(definitionsFolderPath)) {
-                core.error(`[surrealdb-migrations] please commit definitions files before applying migrations`);
-                throw new Error("Git repository is dirty");
+            if (!inputs.skipUntrackedFiles) {
+                const definitionsFolderPath = (0, config_1.retrieveMigrationDefinitionsPath)();
+                if (yield (0, git_1.isRepositoryDirty)(definitionsFolderPath)) {
+                    core.error(`[surrealdb-migrations] please commit definitions files before applying migrations`);
+                    throw new Error("Git repository is dirty");
+                }
             }
         }
         const args = ["apply"].concat(additionalArgs);
