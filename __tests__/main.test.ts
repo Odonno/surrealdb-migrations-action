@@ -1,4 +1,5 @@
 import getActionInputs from "../src/args";
+import { extractConfigRootPath } from "../src/config";
 
 describe("getActionInputs", () => {
   afterEach(() => {
@@ -44,5 +45,61 @@ describe("getActionInputs", () => {
 
       expect(input.requestedVersion).toBe(expected);
     });
+  });
+});
+
+describe("extractConfigRootPath", () => {
+  test("should extract [core] > path", () => {
+    const tomlContent = `[core]
+    path = "./tests-files"
+    schema = "less"
+  
+  [db]
+    address = "ws://localhost:8000"
+    username = "root"
+    password = "root"
+    ns = "test"
+    db = "test"`;
+
+    const value = extractConfigRootPath(tomlContent);
+
+    expect(value).toBe("./tests-files");
+  });
+
+  test("cannot extract if no path in [core]", () => {
+    const tomlContent = `[core]
+    schema = "less"
+  
+  [db]
+    address = "ws://localhost:8000"
+    username = "root"
+    password = "root"
+    ns = "test"
+    db = "test"`;
+
+    const value = extractConfigRootPath(tomlContent);
+
+    expect(value).toBeUndefined();
+  });
+
+  test("cannot extract if no [core]", () => {
+    const tomlContent = `[db]
+    address = "ws://localhost:8000"
+    username = "root"
+    password = "root"
+    ns = "test"
+    db = "test"`;
+
+    const value = extractConfigRootPath(tomlContent);
+
+    expect(value).toBeUndefined();
+  });
+
+  test("cannot extract if no content", () => {
+    const tomlContent = "";
+
+    const value = extractConfigRootPath(tomlContent);
+
+    expect(value).toBeUndefined();
   });
 });
