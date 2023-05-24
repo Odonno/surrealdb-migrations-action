@@ -1,68 +1,28 @@
-import fetch from "node-fetch";
-import { ActionInputs } from "./args";
+import fs from "fs";
+import path from "path";
+import toml from "toml";
 
-export type Config = {
-  /**
-   * The URL to download a tarball of surrealdb-migrations from.
-   */
-  downloadUrl: string;
-};
+const baseMigrationDefinitionsPath = "migrations/definitions";
 
 /**
- * Resolve the configuration (e.g., download url and test options) required to run surrealdb-migrations
- * from the inputs supplied to the action.
- *
- * @param input The parameters of the action.
+ * Read .surrealdb toml file if it exists and retrieve "[core] > path" value
  */
-export default async function resolveConfig(
-  input: ActionInputs
-): Promise<Config> {
-  const releaseEndpoint =
-    "https://api.github.com/repos/Odonno/surrealdb-migrations/releases";
+export const retrieveMigrationDefinitionsPath = (): string => {
+  const surrealdbConfigFilePath = ".surrealdb";
 
-  const downloadUrl = await getDownloadUrl(
-    releaseEndpoint,
-    input.requestedVersion
-  );
+  if (fs.existsSync(surrealdbConfigFilePath)) {
+    const surrealdbConfig = fs.readFileSync(surrealdbConfigFilePath, "utf8");
+    const surrealdbConfigRootPath = extractConfigRootPath(surrealdbConfig);
 
-  return {
-    downloadUrl,
-  };
-}
-
-/**
- * Determine the download URL for the tarball containing the `surrealdb-migrations` binaries.
- *
- * @param releaseEndpoint The URI of the GitHub API that can be used to fetch release information, sans the version number.
- * @param requestedVersion The Git tag of the surrealdb-migrations revision to get a download URL for.
- * May be any valid Git tag, or a special-cased `latest`.
- */
-async function getDownloadUrl(
-  releaseEndpoint: string,
-  requestedVersion: string
-): Promise<string> {
-  const releaseInfoUri =
-    requestedVersion === "latest"
-      ? `${releaseEndpoint}/latest`
-      : `${releaseEndpoint}/tags/${requestedVersion}`;
-
-  const releaseInfoRequest = await fetch(releaseInfoUri);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const releaseInfo: any = await releaseInfoRequest.json();
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const gzipAsset = releaseInfo["assets"].find((asset: any) => {
-    return (
-      asset["name"].startsWith("surrealdb-migrations") &&
-      asset["name"].endsWith(".tar.gz")
-    );
-  });
-
-  if (!gzipAsset) {
-    throw new Error(
-      `Couldn't find a release tarball containing binaries for ${requestedVersion}`
-    );
+    return surrealdbConfigRootPath
+      ? path.join(surrealdbConfigRootPath, baseMigrationDefinitionsPath)
+      : baseMigrationDefinitionsPath;
   }
 
-  return gzipAsset["browser_download_url"];
-}
+  return baseMigrationDefinitionsPath;
+};
+
+export const extractConfigRootPath = (tomlContent: string): string => {
+  const parsedSurrealdbConfig = toml.parse(tomlContent);
+  return parsedSurrealdbConfig?.core?.path;
+};
