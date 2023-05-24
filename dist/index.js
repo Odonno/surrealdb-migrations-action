@@ -219,56 +219,7 @@ const releases_1 = __importDefault(__nccwpck_require__(8427));
 const config_1 = __nccwpck_require__(1234);
 const git_1 = __nccwpck_require__(8153);
 const features_1 = __nccwpck_require__(4834);
-function run() {
-    return __awaiter(this, void 0, void 0, function* () {
-        const inputs = (0, args_1.default)();
-        const { downloadUrl, releaseVersion } = yield (0, releases_1.default)(inputs);
-        core.info(`[surrealdb-migrations] downloading surrealdb-migrations from ${downloadUrl}`);
-        const surrealdbMigrationsTarballPath = yield toolCache.downloadTool(downloadUrl);
-        const surrealdbMigrationsBinPath = yield toolCache.extractTar(surrealdbMigrationsTarballPath);
-        core.addPath(surrealdbMigrationsBinPath);
-        const additionalArgs = [];
-        if (inputs.address) {
-            additionalArgs.push("--address", inputs.address);
-        }
-        if (inputs.url) {
-            additionalArgs.push("--url", inputs.url);
-        }
-        if (inputs.ns) {
-            additionalArgs.push("--ns", inputs.ns);
-        }
-        if (inputs.db) {
-            additionalArgs.push("--db", inputs.db);
-        }
-        if (inputs.username) {
-            additionalArgs.push("--username", inputs.username);
-        }
-        if (inputs.password) {
-            additionalArgs.push("--password", inputs.password);
-        }
-        const canApplyDryRun = (0, features_1.isFeatureAvailable)("apply --dry-run", releaseVersion);
-        const canApplyValidateVersionOrder = (0, features_1.isFeatureAvailable)("apply --validate-version-order", releaseVersion);
-        if (canApplyDryRun && canApplyValidateVersionOrder) {
-            core.info(`[surrealdb-migrations] checking is everything is right`);
-            const applyDryRunArgs = [
-                "apply",
-                "--dry-run",
-                "--validate-version-order",
-            ].concat(additionalArgs);
-            yield exec.exec("surrealdb-migrations", applyDryRunArgs);
-            if (!inputs.skipUntrackedFiles) {
-                const definitionsFolderPath = (0, config_1.retrieveMigrationDefinitionsPath)();
-                if (yield (0, git_1.isRepositoryDirty)(definitionsFolderPath)) {
-                    core.error(`[surrealdb-migrations] please commit definitions files before applying migrations`);
-                    throw new Error("Git repository is dirty");
-                }
-            }
-        }
-        const args = ["apply"].concat(additionalArgs);
-        core.info(`[surrealdb-migrations] applying migrations`);
-        yield exec.exec("surrealdb-migrations", args);
-    });
-}
+main();
 function main() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
@@ -284,7 +235,75 @@ function main() {
         }
     });
 }
-main();
+function run() {
+    return __awaiter(this, void 0, void 0, function* () {
+        const inputs = (0, args_1.default)();
+        const { downloadUrl, releaseVersion } = yield (0, releases_1.default)(inputs);
+        yield installCli(downloadUrl);
+        const additionalApplyArgs = getAdditionalApplyArgs(inputs);
+        const canApplyDryRun = (0, features_1.isFeatureAvailable)("apply --dry-run", releaseVersion);
+        const canApplyValidateVersionOrder = (0, features_1.isFeatureAvailable)("apply --validate-version-order", releaseVersion);
+        if (canApplyDryRun && canApplyValidateVersionOrder) {
+            yield checkApplyInDryRun(additionalApplyArgs, inputs);
+        }
+        yield applyAllMigrations(additionalApplyArgs);
+    });
+}
+function installCli(downloadUrl) {
+    return __awaiter(this, void 0, void 0, function* () {
+        core.info(`[surrealdb-migrations] downloading surrealdb-migrations from ${downloadUrl}`);
+        const surrealdbMigrationsTarballPath = yield toolCache.downloadTool(downloadUrl);
+        const surrealdbMigrationsBinPath = yield toolCache.extractTar(surrealdbMigrationsTarballPath);
+        core.addPath(surrealdbMigrationsBinPath);
+    });
+}
+function getAdditionalApplyArgs(inputs) {
+    const additionalApplyArgs = [];
+    if (inputs.address) {
+        additionalApplyArgs.push("--address", inputs.address);
+    }
+    if (inputs.url) {
+        additionalApplyArgs.push("--url", inputs.url);
+    }
+    if (inputs.ns) {
+        additionalApplyArgs.push("--ns", inputs.ns);
+    }
+    if (inputs.db) {
+        additionalApplyArgs.push("--db", inputs.db);
+    }
+    if (inputs.username) {
+        additionalApplyArgs.push("--username", inputs.username);
+    }
+    if (inputs.password) {
+        additionalApplyArgs.push("--password", inputs.password);
+    }
+    return additionalApplyArgs;
+}
+function checkApplyInDryRun(additionalApplyArgs, inputs) {
+    return __awaiter(this, void 0, void 0, function* () {
+        core.info(`[surrealdb-migrations] checking if everything is right`);
+        const applyDryRunArgs = [
+            "apply",
+            "--dry-run",
+            "--validate-version-order",
+        ].concat(additionalApplyArgs);
+        yield exec.exec("surrealdb-migrations", applyDryRunArgs);
+        if (!inputs.skipUntrackedFiles) {
+            const definitionsFolderPath = (0, config_1.retrieveMigrationDefinitionsPath)();
+            if (yield (0, git_1.isRepositoryDirty)(definitionsFolderPath)) {
+                core.error(`[surrealdb-migrations] please commit definitions files before applying migrations`);
+                throw new Error("Git repository is dirty");
+            }
+        }
+    });
+}
+function applyAllMigrations(additionalApplyArgs) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const args = ["apply"].concat(additionalApplyArgs);
+        core.info(`[surrealdb-migrations] applying migrations`);
+        yield exec.exec("surrealdb-migrations", args);
+    });
+}
 
 
 /***/ }),
@@ -314,7 +333,7 @@ const node_fetch_1 = __importDefault(__nccwpck_require__(4912));
  *
  * @param input The parameters of the action.
  */
-function resolveConfig(input) {
+function getReleaseConfig(input) {
     return __awaiter(this, void 0, void 0, function* () {
         const releaseEndpoint = "https://api.github.com/repos/Odonno/surrealdb-migrations/releases";
         const { requestedVersion } = input;
@@ -327,7 +346,7 @@ function resolveConfig(input) {
         };
     });
 }
-exports["default"] = resolveConfig;
+exports["default"] = getReleaseConfig;
 /**
  * Get the GitHub release information related to the `surrealdb-migrations` based on the requested version.
  *

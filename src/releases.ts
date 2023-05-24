@@ -27,7 +27,7 @@ type GitHubRelease = {
  *
  * @param input The parameters of the action.
  */
-export default async function resolveConfig(
+export default async function getReleaseConfig(
   input: ActionInputs
 ): Promise<Config> {
   const releaseEndpoint =
