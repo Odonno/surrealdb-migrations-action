@@ -1,5 +1,6 @@
 import getActionInputs from "../src/args";
 import { extractConfigRootPath } from "../src/config";
+import { isFeatureAvailable } from "../src/features";
 
 describe("getActionInputs", () => {
   afterEach(() => {
@@ -101,5 +102,23 @@ describe("extractConfigRootPath", () => {
     const value = extractConfigRootPath(tomlContent);
 
     expect(value).toBeUndefined();
+  });
+});
+
+describe("isFeatureAvailable", () => {
+  describe("apply --dry-run", () => {
+    test("is available in v0.9.6 release", () => {
+      const result = isFeatureAvailable("apply --dry-run", "0.9.6");
+
+      expect(result).toBe(true);
+    });
+  });
+
+  describe("apply --dry-run", () => {
+    test("is not available in v0.9.5 release", () => {
+      const result = isFeatureAvailable("apply --dry-run", "0.9.5");
+
+      expect(result).toBe(false);
+    });
   });
 });

@@ -78,6 +78,31 @@ exports.extractConfigRootPath = extractConfigRootPath;
 
 /***/ }),
 
+/***/ 4834:
+/***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
+
+"use strict";
+
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", ({ value: true }));
+exports.isFeatureAvailable = void 0;
+const semver_1 = __importDefault(__nccwpck_require__(2671));
+const features = {
+    "apply --dry-run": {
+        since: "0.9.6",
+    },
+};
+const isFeatureAvailable = (name, version) => {
+    const feature = features[name];
+    return semver_1.default.gte(version, feature.since);
+};
+exports.isFeatureAvailable = isFeatureAvailable;
+
+
+/***/ }),
+
 /***/ 8153:
 /***/ (function(__unused_webpack_module, exports, __nccwpck_require__) {
 
@@ -188,10 +213,11 @@ const args_1 = __importDefault(__nccwpck_require__(3444));
 const releases_1 = __importDefault(__nccwpck_require__(8427));
 const config_1 = __nccwpck_require__(1234);
 const git_1 = __nccwpck_require__(8153);
+const features_1 = __nccwpck_require__(4834);
 function run() {
     return __awaiter(this, void 0, void 0, function* () {
         const inputs = (0, args_1.default)();
-        const { downloadUrl } = yield (0, releases_1.default)(inputs);
+        const { downloadUrl, releaseVersion } = yield (0, releases_1.default)(inputs);
         core.info(`[surrealdb-migrations] downloading surrealdb-migrations from ${downloadUrl}`);
         const surrealdbMigrationsTarballPath = yield toolCache.downloadTool(downloadUrl);
         const surrealdbMigrationsBinPath = yield toolCache.extractTar(surrealdbMigrationsTarballPath);
@@ -215,13 +241,16 @@ function run() {
         if (inputs.password) {
             additionalArgs.push("--password", inputs.password);
         }
-        core.info(`[surrealdb-migrations] checking is everything is right`);
-        const applyDryRunArgs = ["apply", "--dry-run"].concat(additionalArgs);
-        yield exec.exec("surrealdb-migrations", applyDryRunArgs);
-        const definitionsFolderPath = (0, config_1.retrieveMigrationDefinitionsPath)();
-        if (yield (0, git_1.isRepositoryDirty)(definitionsFolderPath)) {
-            core.error(`[surrealdb-migrations] please commit definitions files before applying migrations`);
-            throw new Error("Git repository is dirty");
+        const canApplyDryRun = (0, features_1.isFeatureAvailable)("apply --dry-run", releaseVersion);
+        if (canApplyDryRun) {
+            core.info(`[surrealdb-migrations] checking is everything is right`);
+            const applyDryRunArgs = ["apply", "--dry-run"].concat(additionalArgs);
+            yield exec.exec("surrealdb-migrations", applyDryRunArgs);
+            const definitionsFolderPath = (0, config_1.retrieveMigrationDefinitionsPath)();
+            if (yield (0, git_1.isRepositoryDirty)(definitionsFolderPath)) {
+                core.error(`[surrealdb-migrations] please commit definitions files before applying migrations`);
+                throw new Error("Git repository is dirty");
+            }
         }
         const args = ["apply"].concat(additionalArgs);
         core.info(`[surrealdb-migrations] applying migrations`);
@@ -276,37 +305,51 @@ const node_fetch_1 = __importDefault(__nccwpck_require__(4912));
 function resolveConfig(input) {
     return __awaiter(this, void 0, void 0, function* () {
         const releaseEndpoint = "https://api.github.com/repos/Odonno/surrealdb-migrations/releases";
-        const downloadUrl = yield getDownloadUrl(releaseEndpoint, input.requestedVersion);
+        const { requestedVersion } = input;
+        const releaseInfo = yield getReleaseInfo(releaseEndpoint, requestedVersion);
+        const downloadUrl = yield getDownloadUrl(releaseInfo, requestedVersion);
+        const releaseVersion = releaseInfo.name.replace(/^v/, "");
         return {
             downloadUrl,
+            releaseVersion,
         };
     });
 }
 exports["default"] = resolveConfig;
 /**
- * Determine the download URL for the tarball containing the `surrealdb-migrations` binaries.
+ * Get the GitHub release information related to the `surrealdb-migrations` based on the requested version.
  *
  * @param releaseEndpoint The URI of the GitHub API that can be used to fetch release information, sans the version number.
  * @param requestedVersion The Git tag of the surrealdb-migrations revision to get a download URL for.
  * May be any valid Git tag, or a special-cased `latest`.
  */
-function getDownloadUrl(releaseEndpoint, requestedVersion) {
+function getReleaseInfo(releaseEndpoint, requestedVersion) {
     return __awaiter(this, void 0, void 0, function* () {
         const releaseInfoUri = requestedVersion === "latest"
             ? `${releaseEndpoint}/latest`
             : `${releaseEndpoint}/tags/${requestedVersion}`;
         const releaseInfoRequest = yield (0, node_fetch_1.default)(releaseInfoUri);
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const releaseInfo = yield releaseInfoRequest.json();
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const gzipAsset = releaseInfo["assets"].find((asset) => {
-            return (asset["name"].startsWith("surrealdb-migrations") &&
-                asset["name"].endsWith(".tar.gz"));
+        const response = yield releaseInfoRequest.json();
+        return response;
+    });
+}
+/**
+ * Determine the download URL for the tarball containing the `surrealdb-migrations` binaries.
+ *
+ * @param releaseInfo The GitHub release information downloaded from the GitHub API.
+ * @param requestedVersion The Git tag of the surrealdb-migrations revision to get a download URL for.
+ * May be any valid Git tag, or a special-cased `latest`.
+ */
+function getDownloadUrl(releaseInfo, requestedVersion) {
+    return __awaiter(this, void 0, void 0, function* () {
+        const gzipAsset = releaseInfo.assets.find((asset) => {
+            return (asset.name.startsWith("surrealdb-migrations") &&
+                asset.name.endsWith(".tar.gz"));
         });
         if (!gzipAsset) {
             throw new Error(`Couldn't find a release tarball containing binaries for ${requestedVersion}`);
         }
-        return gzipAsset["browser_download_url"];
+        return gzipAsset.browser_download_url;
     });
 }
 

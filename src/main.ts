@@ -6,10 +6,11 @@ import getActionInputs from "./args";
 import resolveConfig from "./releases";
 import { retrieveMigrationDefinitionsPath } from "./config";
 import { isRepositoryDirty } from "./git";
+import { isFeatureAvailable } from "./features";
 
 async function run(): Promise<void> {
   const inputs = getActionInputs();
-  const { downloadUrl } = await resolveConfig(inputs);
+  const { downloadUrl, releaseVersion } = await resolveConfig(inputs);
 
   core.info(
     `[surrealdb-migrations] downloading surrealdb-migrations from ${downloadUrl}`
@@ -44,18 +45,22 @@ async function run(): Promise<void> {
     additionalArgs.push("--password", inputs.password);
   }
 
-  core.info(`[surrealdb-migrations] checking is everything is right`);
+  const canApplyDryRun = isFeatureAvailable("apply --dry-run", releaseVersion);
 
-  const applyDryRunArgs = ["apply", "--dry-run"].concat(additionalArgs);
-  await exec.exec("surrealdb-migrations", applyDryRunArgs);
+  if (canApplyDryRun) {
+    core.info(`[surrealdb-migrations] checking is everything is right`);
 
-  const definitionsFolderPath = retrieveMigrationDefinitionsPath();
+    const applyDryRunArgs = ["apply", "--dry-run"].concat(additionalArgs);
+    await exec.exec("surrealdb-migrations", applyDryRunArgs);
 
-  if (await isRepositoryDirty(definitionsFolderPath)) {
-    core.error(
-      `[surrealdb-migrations] please commit definitions files before applying migrations`
-    );
-    throw new Error("Git repository is dirty");
+    const definitionsFolderPath = retrieveMigrationDefinitionsPath();
+
+    if (await isRepositoryDirty(definitionsFolderPath)) {
+      core.error(
+        `[surrealdb-migrations] please commit definitions files before applying migrations`
+      );
+      throw new Error("Git repository is dirty");
+    }
   }
 
   const args = ["apply"].concat(additionalArgs);
