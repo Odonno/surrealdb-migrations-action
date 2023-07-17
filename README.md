@@ -20,14 +20,8 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      - name: Install stable toolchain
-        uses: actions-rs/toolchain@v1
-        with:
-          toolchain: stable
-          override: true
-
       - name: Apply migrations
-        uses: Odonno/surrealdb-migrations-action@v0.1.0
+        uses: Odonno/surrealdb-migrations-action@v0.2.0
         with:
           address: "wss://cloud.surrealdb.com"
 ```
