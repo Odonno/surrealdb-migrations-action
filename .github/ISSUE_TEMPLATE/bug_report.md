@@ -34,5 +34,7 @@ Please complete the following information and remove the unnecessary ones.
   - username: [e.g. root]
   - password: [e.g. root]
 
+**Make sure to not share your personal information (address, username, password) to prevent data leaks.**
+
 **Additional context**
 Add any other context about the problem here.
