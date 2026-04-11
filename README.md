@@ -1,5 +1,9 @@
+> **Warning**
+> The project is archived in favor of [Surrealkit](https://github.com/surrealdb/surrealkit) as it is now the official migration tool for SurrealDB.
+
 # `surrealdb-migrations` Action
 
+![No Maintenance Intended](https://img.shields.io/maintenance/no/2026.svg)
 ![MIT licensed](https://img.shields.io/badge/license-MIT-blue.svg)
 
 This GitHub Action installs and runs [surrealdb-migrations](https://github.com/Odonno/surrealdb-migrations).
